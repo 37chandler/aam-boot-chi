@@ -1,5 +1,5 @@
 ---
-title: "Bootstrap Chi-Square and Correlation"
+title: "Bootstrap Chi-Square"
 author: "Your Name"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 html_document:
@@ -23,15 +23,16 @@ library(rsample)
 
 ## Introduction
 
-In this assignment we explore the (semi-) familiar statistics we learned to measure
-the association between variables. When we have two categorical variables, we use
-the $\chi^2$ test of association, which is based on the $\chi^2$ statistic. With two
-continuous variables, and some assumptions such as a linear relationship between them, 
-we use the correlation coefficient, which comes with its own statistical test. 
+In this assignment we explore a (semi-) familiar statistic we learned to measure
+the association between variables. When we want to measure the association between two
+categorical variables, we use the $\chi^2$ test of association, which is based on 
+the $\chi^2$ statistic. The $\chi^2$ statistic is incredibly handy, since it 
+allows you to compare observed categories to what you might expect under an
+assumption of "marginal independence". 
 
-We'll calculate these statistics in a manual fashion (something you'd _never_ 
-do in real life). We'll then use bootstrapping to estimate standard errors 
-of the statistics. We'll draw inference from those standard errors and compare
+We'll calculate this statistics manually, which may come in handy if you ever want
+to adapt this to a new use. We'll then use bootstrapping to estimate the standard 
+errors of the statistic. We'll draw inference from those standard errors and compare
 the outcome to the tests we're more familiar with. 
 
 You might fairly ask why you need to calculate these statistics manually, when
@@ -42,8 +43,9 @@ class that results in you vaguely knowing
 the $\chi^2$ statistic and correlation coefficient (symbolized by $\rho$). But 
 writing the code from scratch usually locks in the ideas more firmly. 
 
-With regard to the bootstrap process, it's not too important here, as you'll see 
-below. In most cases the traditional approaches to estimating these quantities (seen in 
+With regard to the bootstrap process, you'll see that it's not too critical here, 
+since the standard approaches to this analysis give the same results. 
+In most cases the traditional approaches to estimating these quantities (seen in 
 `chisq.test` and `cor.test`) are fine. Here the bootstrap is like squirrel hunting with
 a bazooka. The power of the bootstrap is the ability to make good estimates of 
 standard errors in situations where you have statistics that are _not_ well behaved
@@ -51,10 +53,6 @@ standard errors in situations where you have statistics that are _not_ well beha
 to learn how to code up something like this. I'm also hopeful that you might
 be able to use a function like this in a case where the R function won't work with 
 your data for some reason.
-
-There's a secret third benefit as well. By writing code that matches the statistical
-software, you're likely to trust your own abilities more. And the bootstrap 
-method!
 
 ```{r data-input, message=F}
 d <- read_tsv(paste(here(),"survey_data.txt",sep="/"))
@@ -101,17 +99,16 @@ the `chisq.test` function:
 
 ```
 
-<!-- Your commentary here. --> 
+<!-- Your commentary around here. --> 
 
 You should find the $\chi^2$ statistic is 1.7964 here^[
 If you run this with `correct=T`, the default, then
 you'll have a $\chi^2$ statistic of 1.57. This correction, 
 which is called the 
 [Yate's continuity correction](https://en.wikipedia.org/wiki/Yates%27s_correction_for_continuity)
-involves subtracting 0.5 from the numerator of our formula's numerator. Typically
+involves subtracting 0.5 from the numerator of our formula. Typically
 it doesn't change the results much and there's no need for us to worry about it here.]. 
-This is the result of 
-calculating the expected value in every cell and comparing it
+This is the result of calculating the expected value in every cell and comparing it
 to the observed values. Let's do that now. 
 
 To understand the expected cell value, we make an assumption of independence
@@ -126,7 +123,8 @@ by the number of rows (`r nrow(d.small)`) and get
 `r round(sum(d.small$region=="Thurston")/nrow(d.small)*sum(d.small$engagement=="Highly Engaged")/nrow(d.small)*nrow(d.small),3)` people in this cell. Instead we
 have `r sum(d.small$region=="Thurston" & d.small$engagement=="Highly Engaged")`. 
 
-Let's automate the calculation of those expected values. Write a function that
+Let's automate the calculation of those expected values. This step is the hardest
+part of this assignment. Write a function that
 takes two vectors (let's call them $a$ and $b$) as input and returns a table in the
 same form as `table(a,b)`, but with expected values in the cells. I have a stub
 here to help you get started. One tip, the `outer` function could save you some time here. 
@@ -217,7 +215,7 @@ sd(results$statistic)
 ```
 
 Typically you'd calculate a confidence interval by taking, say, two standard errors on either
-side of the measured value. In this case that'd be an interval that started at 
+side of the measured value. In this case that would be an interval that started at 
 `r round(actual.value - 2*sd(results$statistic),3)` on the left and went up to 
 `r round(actual.value + 2*sd(results$statistic),3)` on the right. That's absurd, since 
 the lower bound can't be any lower than zero. The problem is, as you can see 
@@ -241,7 +239,8 @@ quantile(results$statistic,probs=c(0.05,0.95))
 ```
 
 This confidence interval is quite wide, indicating a great deal of uncertainty 
-relative to the actual value. Statistics much smaller _and_ much larger are plausible. 
+relative to the actual value. Values of the $\chi^2$ statistic that are
+much smaller _and_ much larger seem plausible plausible. 
 
 There's no good way that I know of to turn this kind of bootstrap distribution into 
 a hypothesis test. Could this value equal zero? Sure, there's lots of probability at very
@@ -268,25 +267,7 @@ data set (regions and three levels of engagement).
 1. Plot the results.
 1. What can you infer about our measured value? 
 
-## Correlation Coefficients
 
-Let's follow the example above but with the correlation coefficient. Recall that
-the definition of the correlation between $X$ and $Y$ (two random variables) is
-$$
-\rho_{X,Y} = \frac{\textrm{cov}(X,Y)}{\sigma_X \cdot \sigma_Y}
-$$
-
-We won't calculate these statistics by hand, since `cov` and `sd` work just fine for our
-purposes, but we will build our own correlation coefficient. Here are the steps
-for this section of the assignment: 
-
-1. Write a function called `my.cor` that takes as input two vectors and returns the 
-correlation coefficient between them. Verify that you get the same results as the `cor` 
-function.
-1. Use this function to calculate the correlation between age and progressivism. 
-1. Use bootstrap resampling to estimate the standard error of this correlation coefficient.
-1. Does the measured correlation appear significant? 
-1. Compare your results to the output from `cor.test`.
 
 ## Appendix: Full Data Description
 A financial institution in Washington has become concerned that their current membership base is not well-aligned with their corporate values. Through that concern they realized that don't actually understand their membership's values very well. They surveyed 2,421 members to shed light on the issue. 
