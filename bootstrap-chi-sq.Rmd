@@ -260,7 +260,7 @@ actual $\chi^2$ value is already small.
 
 Now some work for you. We've been using `d.small`, which only included data on 
 two regions and two engagement levels. Repeat what we've done, but for the entire 
-data set (regions and three levels of engagement). 
+data set (five regions and three levels of engagement). 
 
 1. Calculate the chi-square statistic using the function you wrote above. 
 1. Calculate the variability of this estimate using bootstrap resampling.
