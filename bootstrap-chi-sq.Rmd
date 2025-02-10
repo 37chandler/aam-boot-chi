@@ -55,7 +55,7 @@ be able to use a function like this in a case where the R function won't work wi
 your data for some reason.
 
 ```{r data-input, message=F}
-d <- read_tsv(paste(here(),"survey_data.txt",sep="/"))
+d <- read_tsv(here("survey_data.txt"))
 
 d.small <- d %>%
   filter(region %in% c("Thurston","W WA Non Metro"),
